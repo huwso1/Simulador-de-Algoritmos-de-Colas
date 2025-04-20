@@ -1,0 +1,39 @@
+/* Estilos para la tabla de procesos */
+.processes-table-container {
+  margin-top: 20px;
+}
+
+.processes-table {
+  border-collapse: collapse;
+  width: 100%; 
+}
+
+.processes-table th,
+.processes-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.processes-table th[colspan] {
+  text-align: center;
+}
+
+.input-controls {
+  margin-bottom: 15px;
+}
+
+.input-controls label {
+  margin-right: 10px;
+}
+
+.input-controls input[type="number"] {
+  padding: 5px;
+  width: 60px;
+}
+
+.input-controls button {
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
