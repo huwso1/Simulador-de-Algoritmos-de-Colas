@@ -1,3 +1,5 @@
+import AlgorithmFactory from './AlgorithmFactory.js';
+import * as constants from './Algorithm.js';
 const numRowsInput = document.getElementById("numRows");
 const createTableBtn = document.getElementById("createTableBtn");
 const tableContainer = document.getElementById("tableContainer");
@@ -5,6 +7,11 @@ const simulateBtnFCFS = document.getElementById("simulateBtnFCFS");
 const simulateBtnSJF = document.getElementById("simulateBtnSJF");
 const simulateBtnSRTF = document.getElementById("simulateBtnSRTF");
 const simulateBtnRR = document.getElementById("simulateBtnRR");
+const Alogirthmfr=new AlgorithmFactory();
+//En esta variable se guardan los campos que contienen los datos de cada proceso
+let CamposDeProcesos= [];
+//Estas constantes indican el tipo de algoritmo escogido
+
 
 function generateTextInput(placeholder = "") {
   const input = document.createElement("input");
@@ -47,36 +54,50 @@ function createTableHeader() {
 
 function createTableBody(numRows) {
   const tbody = document.createElement("tbody");
-
   for (let i = 0; i < numRows; i++) {
+    var Camposdesimulacion =[];
     const row = document.createElement("tr");
     row.dataset.processId = i;
 
     // Proceso ID 
     const idCell = document.createElement("td");
+    Camposdesimulacion.push(`P${i}`);
     idCell.textContent = `P${i}`;
     row.appendChild(idCell);
-
+    
     // Llegada y ejecución
     const llegadaCell = document.createElement("td");
-    llegadaCell.appendChild(generateTextInput("Llegada"));
+    const llegadaCellInput=generateTextInput("Llegada");
+    //Valores de prueba
+    llegadaCellInput.value=0;
+    llegadaCell.appendChild(llegadaCellInput);
     row.appendChild(llegadaCell);
+    Camposdesimulacion.push(llegadaCellInput);
 
     const ejecucionCell = document.createElement("td");
-    ejecucionCell.appendChild(generateTextInput("Ejecución"));
+    const ejecucionCellInput=generateTextInput("Ejecución");
+    ejecucionCellInput.value=15;
+    ejecucionCell.appendChild(ejecucionCellInput);
     row.appendChild(ejecucionCell);
+   Camposdesimulacion.push(ejecucionCellInput);
 
     // Bloqueos
     for (let i = 0; i < 3; i++) {
       const inicioCell = document.createElement("td");
-      inicioCell.appendChild(generateTextInput("Inicio"));
+      const inicioCellInput=generateTextInput("Inicio")
+      inicioCellInput.value=5+i;
+      inicioCell.appendChild(inicioCellInput);
       row.appendChild(inicioCell);
+    Camposdesimulacion.push(inicioCellInput);
 
       const duracionCell = document.createElement("td");
-      duracionCell.appendChild(generateTextInput("Duración"));
-      row.appendChild(duracionCell);
+      const inputcell=generateTextInput("Duración")
+      inputcell.value=2;
+      duracionCell.appendChild(inputcell);
+      row.appendChild(inputcell);
+      Camposdesimulacion.push(inputcell);
     }
-
+    CamposDeProcesos.push(Camposdesimulacion);
     tbody.appendChild(row);
   }
 
@@ -110,9 +131,34 @@ function renderTable(numRows) {
   simulateBtnSJF.disabled = false;
   simulateBtnSRTF.disabled = false;
   simulateBtnRR.disabled = false;
+  
 }
 
 createTableBtn.addEventListener("click", () => {
   const numRows = parseInt(numRowsInput.value, 10);
   renderTable(numRows);
 });
+//Eventos Listener para el click sobre cada boton
+simulateBtnSRTF.addEventListener("click", () => {
+  
+  getAlgorithm(constants.SRTF);
+});
+simulateBtnSJF.addEventListener("click", () => {
+  getAlgorithm(constants.SJF);
+});
+simulateBtnFCFS.addEventListener("click", () => {
+  var FCFSAl=Alogirthmfr.getAlgorithm(constants.FCFS,CamposDeProcesos);
+  FCFSAl.start();
+});
+simulateBtnRR.addEventListener("click", () => {
+  getAlgorithm(constants.RR);
+});
+
+function debugSimulation(){
+  CamposDeProcesos.forEach(proceso =>{
+    proceso.forEach(campo=>{
+      console.log(campo.value);
+    })
+  } )
+  
+}
