@@ -7,6 +7,8 @@ class Proceso{
         this.nombre=nombre;
         this.llegada=llegada;
         this.tiempoEjecucion=tiempoEjecucion;
+        this.Respuesta=false;
+        this.tiempoDeRespuesta=undefined;
         this.Bloqueo1=new Bloqueo(Bloqueo1I,Bloqueo1e);
         this.Bloqueo2=new Bloqueo(Bloqueo2I,Bloqueo2e);
         this.Bloqueo3=new Bloqueo(Bloqueo3I,Bloqueo3e);
@@ -72,6 +74,9 @@ class Proceso{
         this.started=true;
     }
     PonerenEjecucion(){
+        if(!this.Respuesta){
+            this.tiempoDeRespuesta=this.tiempoDesdeInicio;
+        }
         this.isblocked=false;
         this.iswaiting=false;
     }

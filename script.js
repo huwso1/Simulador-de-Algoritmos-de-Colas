@@ -1,5 +1,6 @@
 import AlgorithmFactory from './AlgorithmFactory.js';
 import * as constants from './Algorithm.js';
+import TablondeProceso from './TablondeProceso.js';
 const numRowsInput = document.getElementById("numRows");
 const createTableBtn = document.getElementById("createTableBtn");
 const tableContainer = document.getElementById("tableContainer");
@@ -8,6 +9,8 @@ const simulateBtnSJF = document.getElementById("simulateBtnSJF");
 const simulateBtnSRTF = document.getElementById("simulateBtnSRTF");
 const simulateBtnRR = document.getElementById("simulateBtnRR");
 const Alogirthmfr=new AlgorithmFactory();
+let kanvas;
+
 //En esta variable se guardan los campos que contienen los datos de cada proceso
 let CamposDeProcesos= [];
 //Estas constantes indican el tipo de algoritmo escogido
@@ -138,23 +141,29 @@ function renderTable(numRows) {
 createTableBtn.addEventListener("click", () => {
   const numRows = parseInt(numRowsInput.value, 10);
   renderTable(numRows);
+  kanvas=new TablondeProceso(document.getElementById("Cuadricula"),numRows);
 });
 //Eventos Listener para el click sobre cada boton
 simulateBtnSRTF.addEventListener("click", () => {
   
   var SRTFAL=Alogirthmfr.getAlgorithm(constants.SRTF,CamposDeProcesos);
+  SRTFAL.subscribe(kanvas);
   SRTFAL.start(); 
 });
 simulateBtnSJF.addEventListener("click", () => {
   var SJFAL=Alogirthmfr.getAlgorithm(constants.SJF,CamposDeProcesos);
+  SJFAL.subscribe(kanvas);
   SJFAL.start();
 });
 simulateBtnFCFS.addEventListener("click", () => {
   var FCFSAl=Alogirthmfr.getAlgorithm(constants.FCFS,CamposDeProcesos);
+  FCFSAl.subscribe(kanvas);
   FCFSAl.start();
 });
 simulateBtnRR.addEventListener("click", () => {
-  getAlgorithm(constants.RR);
+  var RRAl= Alogirthmfr.getAlgorithm(constants.RR,CamposDeProcesos);
+  RRAl.subscribe(kanvas);
+  RRAl.start();
 });
 
 function debugSimulation(){

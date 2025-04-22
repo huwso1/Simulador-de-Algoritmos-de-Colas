@@ -3,6 +3,8 @@ import Algorithm from './Algorithm.js';
 class SJF extends Algorithm{
     constructor(ProcesosDeSimulacion){
         super();
+        this.metricas=[];
+        this.metricasSistema=[];
         this.procesosCargados=[];
         this.procesos=ProcesosDeSimulacion;
         this.subscribers=[];
@@ -29,10 +31,15 @@ class SJF extends Algorithm{
         this.procesosCargados.forEach(Process=>{
             Process.notify();
         })
+        this.subscribers.forEach(suscriber=>{
+            suscriber.notify(this.drawinconsole);
+        })
 
     }
     //Suscribirse al reloj del algoritmo
-    subscribe(suscriptor){}
+    subscribe(suscriptor){
+        this.subscribers.push(suscriptor);
+    }
 
     SJFAL(){
         var ProcesoActual;
@@ -106,6 +113,7 @@ class SJF extends Algorithm{
         this.drawProcess();
         if(this.cola.length==0 && this.procesosBloqueados.length==0){
             //Termina la simulacion
+            this.generateMetrics();
             clearInterval(this.hilo);
         }
 
@@ -151,6 +159,78 @@ class SJF extends Algorithm{
             for(var i=0;i<this.drawinconsole.length;i++){
                 console.log(this.drawinconsole[i]);
             }
+            return this.drawinconsole;
+        }
+        generateMetrics(){
+            this.procesosCargados.forEach(Process=>{
+                let MetricasDelProceso=[];
+                //Nombre del proceso
+                MetricasDelProceso.push(Process.nombre);
+                //Tiempo de ejecucion
+                MetricasDelProceso.push(Process.tiempoEjecucion);
+                //Tiempo de Respuesta
+                MetricasDelProceso.push(Process.tiempoDeRespuesta);
+                //Tiempo de bloqueo
+                let TiempoDeBloqueo=Process.Bloqueo1.duracion+Process.Bloqueo2.duracion+Process.Bloqueo3.duracion;
+                MetricasDelProceso.push(TiempoDeBloqueo);
+                //Tiempo de espera
+                let TiempoDeEspera=Process.tiempoDesdeInicio-TiempoDeBloqueo-Process.tiempoEjecucion;
+                MetricasDelProceso.push(TiempoDeEspera);
+                //Tiempo de finalizacion
+                MetricasDelProceso.push(Process.tiempoDesdeInicio);
+                //Retorno
+                let Retorno=Process.tiempoDesdeInicio-Process.llegada;
+                MetricasDelProceso.push(Retorno);
+                //Tiempo Perdido
+                MetricasDelProceso.push(Retorno-Process.tiempoEjecucion);
+                //Penalidad
+                MetricasDelProceso.push(Retorno/Process.tiempoEjecucion);
+                this.metricas.push(MetricasDelProceso);
+            })
+            this.generateProcessorMetrics();
+           return this.metricas;
+                }
+        //Generar las metricas del procesador
+        generateProcessorMetrics(){
+            //Tiempo encendido
+            this.metricasSistema.push(this.relojdelsistema);
+            //Uso total de cpu
+            var usoTotal=0;
+            this.procesosCargados.forEach(Process=>{
+                usoTotal=usoTotal+Process.tiempoEjecucion;
+            })
+            this.metricasSistema.push(usoTotal);
+            //Tiempo de ocio
+            this.metricasSistema.push(this.relojdelsistema-usoTotal);
+            //Tiempo Promedio de retorno
+            let promedioDeRetorno=0;
+            for(var i=0;i<this.metricas.length;i++){
+                    promedioDeRetorno=promedioDeRetorno+this.metricas[i][6];
+            }
+            promedioDeRetorno=promedioDeRetorno/this.metricas.length;
+            this.metricasSistema.push(promedioDeRetorno);
+            //Tiempo Promedio de ejecucion
+            let promedioDeEjecucion=0;
+            for(var i=0;i<this.metricas.length;i++){
+                    promedioDeEjecucion=promedioDeEjecucion+this.metricas[i][1];
+            }
+            promedioDeEjecucion=promedioDeEjecucion/this.metricas.length;
+            this.metricasSistema.push(promedioDeEjecucion);
+            //Tiempo Promedio de espera
+            let promedioDeEspera=0;
+            for(var i=0;i<this.metricas.length;i++){
+                promedioDeEspera=promedioDeEspera+this.metricas[i][4];
+            }
+            promedioDeEspera=promedioDeEspera/this.metricas.length;
+            this.metricasSistema.push(promedioDeEspera);
+            //Tiempo Promedio de tiempo perdido
+            let promedioDeTiempoPerdido=0;
+            for(var i=0;i<this.metricas.length;i++){
+                promedioDeTiempoPerdido=promedioDeTiempoPerdido+this.metricas[i][7];
+            }
+            promedioDeTiempoPerdido=promedioDeTiempoPerdido/this.metricas.length;
+            this.metricasSistema.push(promedioDeTiempoPerdido);
+            return this.metricasSistema;
         }
     }
     export default SJF;

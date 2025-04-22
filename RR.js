@@ -1,11 +1,16 @@
 import Proceso from './Process.js';
 import Algorithm from './Algorithm.js';
-class FCFS extends Algorithm{
+import Scheduler from './Scheduler.js';
+class RR extends Algorithm{
     constructor(ProcesosDeSimulacion){
         super();
         this.metricas=[];
         this.metricasSistema=[];
         this.procesosCargados=[];
+        //Se crea el scheduler
+        this.Scheduler=new Scheduler(this.getQuantum());
+        //Se agrega el Scheduler con su respectivo quantum
+        this.procesosCargados.push(this.Scheduler);
         this.procesos=ProcesosDeSimulacion;
         this.subscribers=[];
         this.loadProcess();
@@ -16,14 +21,16 @@ class FCFS extends Algorithm{
         this.procesosBloqueados=[];
         //Para propositos de prueba se utiliza este arreglo
         this.drawinconsole=[];
+        this.drawinconsole.push([this.Scheduler.nombre]);
         for(var i=0; i<this.procesos.length;i++){
             this.drawinconsole.push([this.procesos[i][0]]);
+
         }
         
     }
 
     start(){
-        this.hilo=setInterval(()=>{this.FCFSAl()},500)
+        this.hilo=setInterval(()=>{this.RRAL()},500)
     }
     //Avisar a los suscriptores de un cambio
     notify(){
@@ -39,20 +46,25 @@ class FCFS extends Algorithm{
     subscribe(suscriptor){
         this.subscribers.push(suscriptor);
     }
-
-    FCFSAl(){
+    RRAL(){
         var ProcesoActual;
         //Itera sobre los procesos cargados
         this.procesosCargados.forEach(Process=>{
             //Revisa si un proceso ha llegado
-            if(Process.llegada==this.relojdelsistema && !Process.started){
+            if(Process.llegada==this.relojdelsistema && !Process.started ){
                 //Marca el proceso como iniciado
+                
                 Process.IniciarProceso();
                 //Agrega el proceso a la cola de ejecucion
                 this.cola.push(Process);
                 console.log("El proceso "+Process.nombre+" Ha entado a la cola");
             }
         })
+        //Si el Scheduler se esta ejecutando, lo pone en espera para dar paso al siguiente proceso en la cola.
+        if(!this.Scheduler.iswaiting && this.cola.length!=0){
+            this.Scheduler.ResetEjecucion();
+            this.Scheduler.PonerenEspera();
+        }
         //Itera sobre los procesos bloqueados y los que se desbloquean se eliminan de la lista de procesos bloqueados.
         for(let i=this.procesosBloqueados.length-1;i>=0;i--){
             console.log(i);
@@ -62,8 +74,22 @@ class FCFS extends Algorithm{
                 this.procesosBloqueados.splice(i,1);
             }
         }
-        //El algoritmo revisa quien llego primero, es decir, el primer proceso en la cola.
-        if(this.cola.length==0){
+       // El scheduler revisa si ya se ha cumplido el Quantum, si es el caso, lo ejecuta.
+        if(this.Scheduler.tiempoEjecutado==this.Scheduler.quantum){
+           this.Scheduler.PonerenEjecucion();
+           if(!this.cola.length==0){
+            this.cola.at(0).PonerenEspera();
+            var aux=this.cola.at(0);
+            this.cola.splice(0,1);
+            this.cola.push(aux);
+           }
+         
+        }
+        
+
+        console.log(this.cola);
+        //El algoritmo revisa quien esta primero en la cola
+        if(this.cola.length==0 || !this.Scheduler.iswaiting){
             //No hago nada
         }else{
             ProcesoActual=this.cola.at(0);
@@ -79,8 +105,10 @@ class FCFS extends Algorithm{
                         break;
                     }
             }
+
             //Revisa que proceso Actual no sea undefined para evitar excepciones
             if(ProcesoActual!=undefined){
+                console.log(ProcesoActual);
             //Revisa si el proceso actual va a bloquearse en este ciclo.
             while(ProcesoActual.BloqueodeProceso()){
                 //Si es el caso, Se bloquea y lo elimina de la cola.
@@ -88,10 +116,11 @@ class FCFS extends Algorithm{
                 this.procesosBloqueados.push(ProcesoActual);
                 this.cola.splice(0,1);
                 //Asigna al siguiente proceso en la cola como procesoActual.
-                if(this.cola.length!=0){
+                if(this.cola.length!=0 && !this.Scheduler.iswaiting){
                 ProcesoActual=this.cola.at(0);
                 }else{
                     ProcesoActual=undefined;
+                    this.Scheduler.PonerenEjecucion();
                     //Si no encuentra ningun proceso que no se vaya a bloquear se salta el ciclo.
                     break;
                 }
@@ -106,8 +135,7 @@ class FCFS extends Algorithm{
         this.drawProcess();
         if(this.cola.length==0 && this.procesosBloqueados.length==0){
             //Termina la simulacion
-            console.log(this.generateMetrics());
-
+            this.generateMetrics();
             clearInterval(this.hilo);
         }
 
@@ -132,12 +160,14 @@ class FCFS extends Algorithm{
                 ,Bloqueo1e,Bloqueo2I,Bloqueo2e,Bloqueo3I,Bloqueo3e))
             
         });
+        
+        
         console.log(this.procesosCargados);
             
         };
         drawProcess(){
             for(var i=0;i<this.drawinconsole.length;i++){
-                if(this.procesosCargados[i].started && !this.procesosCargados[i].isOver ){
+                if(this.procesosCargados[i].started && !this.procesosCargados[i].isOver  ){
                 if(this.procesosCargados[i].isblocked){
                     this.drawinconsole[i].push("-");
                 }
@@ -153,9 +183,16 @@ class FCFS extends Algorithm{
             for(var i=0;i<this.drawinconsole.length;i++){
                 console.log(this.drawinconsole[i]);
             }
-            return this.drawinconsole;
         }
-        //Generar las metricas de cada proceso
+        getQuantum(){
+            let quantum;
+                    quantum=prompt("Ingresa el valor del Quantum");
+                    if( quantum=""|| parseInt(quantum) <1|| parseInt(quantum)){
+                        alert("Valor invalido, se utilizara el valor por defecto(3)");
+                        quantum=3;
+                    }
+            return quantum;
+        }
         generateMetrics(){
             this.procesosCargados.forEach(Process=>{
                 let MetricasDelProceso=[];
@@ -228,4 +265,4 @@ class FCFS extends Algorithm{
             return this.metricasSistema;
         }
     }
-    export default FCFS;
+    export default RR;

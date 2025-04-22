@@ -3,6 +3,7 @@ import FCFS from './FCFS.js';
 import * as constants from './Algorithm.js';
 import SJF from './SJF.js';
 import SRTF from "./SRTF.js";
+import RR from  './RR.js';
 class AlgorithmFactory {
 
     constructor(){
@@ -24,7 +25,7 @@ class AlgorithmFactory {
         }
         if(type==constants.RR){
             //Aqui se instancia un algoritmo de tipo RR
-            return "";
+            return new RR(Procesos);
         }
         return "";
     }
