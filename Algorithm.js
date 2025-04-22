@@ -6,6 +6,7 @@ class Algorithm{
     notify(){}
     //Suscribirse al reloj del algoritmo
     subscribe(suscriptor){}
+    drawProcess(){}
     
 }
 export default Algorithm;

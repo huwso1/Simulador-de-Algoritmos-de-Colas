@@ -1,6 +1,8 @@
 import   "./script.js" ;
 import FCFS from './FCFS.js';
 import * as constants from './Algorithm.js';
+import SJF from './SJF.js';
+import SRTF from "./SRTF.js";
 class AlgorithmFactory {
 
     constructor(){
@@ -9,7 +11,7 @@ class AlgorithmFactory {
  getAlgorithm(type,Procesos){
         if(type==constants.SJF){
             //Aqui se Instancia un algoritmo de tipo RF
-            return "";
+            return new SJF(Procesos);
         }
         if(type==constants.FCFS){
             //Aqui se instancia un algoritmo de tipo FCFS
@@ -18,7 +20,7 @@ class AlgorithmFactory {
         }
         if(type==constants.SRTF){
             //Aqui se instancia un algoritmo de tipo SRTF
-            return "";
+            return new SRTF(Procesos);
         }
         if(type==constants.RR){
             //Aqui se instancia un algoritmo de tipo RR

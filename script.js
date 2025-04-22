@@ -61,7 +61,8 @@ function createTableBody(numRows) {
 
     // Proceso ID 
     const idCell = document.createElement("td");
-    Camposdesimulacion.push(`P${i}`);
+    var IDProcess='P'+i;
+    Camposdesimulacion.push(IDProcess);
     idCell.textContent = `P${i}`;
     row.appendChild(idCell);
     
@@ -141,10 +142,12 @@ createTableBtn.addEventListener("click", () => {
 //Eventos Listener para el click sobre cada boton
 simulateBtnSRTF.addEventListener("click", () => {
   
-  getAlgorithm(constants.SRTF);
+  var SRTFAL=Alogirthmfr.getAlgorithm(constants.SRTF,CamposDeProcesos);
+  SRTFAL.start(); 
 });
 simulateBtnSJF.addEventListener("click", () => {
-  getAlgorithm(constants.SJF);
+  var SJFAL=Alogirthmfr.getAlgorithm(constants.SJF,CamposDeProcesos);
+  SJFAL.start();
 });
 simulateBtnFCFS.addEventListener("click", () => {
   var FCFSAl=Alogirthmfr.getAlgorithm(constants.FCFS,CamposDeProcesos);

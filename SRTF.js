@@ -1,6 +1,6 @@
 import Proceso from './Process.js';
 import Algorithm from './Algorithm.js';
-class FCFS extends Algorithm{
+class SRTF extends Algorithm{
     constructor(ProcesosDeSimulacion){
         super();
         this.procesosCargados=[];
@@ -16,12 +16,13 @@ class FCFS extends Algorithm{
         this.drawinconsole=[];
         for(var i=0; i<this.procesos.length;i++){
             this.drawinconsole.push([this.procesos[i][0]]);
+
         }
         
     }
 
     start(){
-        this.hilo=setInterval(()=>{this.FCFSAl()},500)
+        this.hilo=setInterval(()=>{this.SRTFAL()},500)
     }
     //Avisar a los suscriptores de un cambio
     notify(){
@@ -33,7 +34,7 @@ class FCFS extends Algorithm{
     //Suscribirse al reloj del algoritmo
     subscribe(suscriptor){}
 
-    FCFSAl(){
+    SRTFAL(){
         var ProcesoActual;
         //Itera sobre los procesos cargados
         this.procesosCargados.forEach(Process=>{
@@ -55,7 +56,13 @@ class FCFS extends Algorithm{
                 this.procesosBloqueados.splice(i,1);
             }
         }
-        //El algoritmo revisa quien llego primero, es decir, el primer proceso en la cola.
+        //Se sortea la cola priorizando los procesos con menor tiempo de ejecucion
+        
+        this.cola=this.cola.sort((a,b)=>{
+            return (a.tiempoEjecucion-a.tiempoEjecutado)-(b.tiempoEjecucion-b.tiempoEjecutado);
+        })
+        console.log(this.cola);
+        //El algoritmo revisa quien esta primero en la cola, es decir el proceso con menor tiempo de ejecucion.
         if(this.cola.length==0){
             //No hago nada
         }else{
@@ -146,4 +153,4 @@ class FCFS extends Algorithm{
             }
         }
     }
-    export default FCFS;
+    export default SRTF;

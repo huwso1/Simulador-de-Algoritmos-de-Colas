@@ -1,78 +1,78 @@
 
+import Bloqueo from './Bloqueo.js';
 class Proceso{
 
-    constructor(nombre,llegada, tiempoEjecucion,Bloqueo1I,Bloqueo1e,Bloqueo2I,Bloqueo2e,Bloqueo3I,Bloqueo3e){
+    constructor(nombre,llegada,tiempoEjecucion,Bloqueo1I,Bloqueo1e,Bloqueo2I,Bloqueo2e,Bloqueo3I,Bloqueo3e){
+        
         this.nombre=nombre;
         this.llegada=llegada;
         this.tiempoEjecucion=tiempoEjecucion;
-        this.Bloqueo1I=Bloqueo1I;
-        this.Bloqueo1e=Bloqueo1e;
-        this.Bloqueo2I=Bloqueo2I;
-        this.Bloqueo2e=Bloqueo2e;
-        this.Bloqueo3I=Bloqueo3I;
-        this.Bloqueo3e=Bloqueo3e;
+        this.Bloqueo1=new Bloqueo(Bloqueo1I,Bloqueo1e);
+        this.Bloqueo2=new Bloqueo(Bloqueo2I,Bloqueo2e);
+        this.Bloqueo3=new Bloqueo(Bloqueo3I,Bloqueo3e);
         this.isblocked=false;
         this.iswaiting=true;
         this.tiempoEjecutado=0;
         this.tiempoBloqueo=0;
         this.tiempoDesdeInicio=0;
         this.isOver=false;
+        this.started=false;
     }
     notify(){
-    this.tiempoDesdeInicio++;
-    if(!this.iswaiting && !this.isblocked){
-        console.log(this.nombre+"Se esta ejecutando");
-        this.tiempoEjecutado++;
-    }
-    this.BloqueodeProceso();
-   
-    if(this.isblocked){
-        
-        if(this.tiempoBloqueo==0){
-            
-            this.desbloquearProceso();
+        //Si el proceso ya comenzo y no ha terminado.
+    if(this.started && !this.isOver){
+        console.log(this.tiempoEjecutado);
+        this.tiempoDesdeInicio++;
+        //Si no esta esperando, o esta bloqueado aumenta el tiempo de ejecucion.
+        if(!this.iswaiting && !this.isblocked){
+            this.tiempoEjecutado++;
         }
-        this.tiempoBloqueo--;
+        if(this.isblocked){
+            this.tiempoBloqueo--;
+        }
     }
-    if(this.tiempoEjecutado==this.tiempoEjecucion){
+    if(this.tiempoEjecucion==this.tiempoEjecutado){
         this.terminarProceso();
     }
     
+    
     }
     BloqueodeProceso(){
-        if(this.isblocked){
-            console.log(this.tiempoBloqueo);
-            console.log("no se puede bloquear mas");
-            return;
+        if(this.tiempoEjecutado==this.Bloqueo1.inicio && !this.Bloqueo1.ejecutado){
+            this.tiempoBloqueo=this.Bloqueo1.ejecutarBloqueo();
+            
+            return true;
         }
-        if(this.tiempoEjecutado==this.Bloqueo1I){
-            this.BloquearProceso();
-            this.tiempoBloqueo=this.Bloqueo1e;
+        if( this.tiempoEjecutado==this.Bloqueo2.inicio && !this.Bloqueo2.ejecutado){
+            this.tiempoBloqueo=this.Bloqueo2.ejecutarBloqueo();
+            return true;
         }
-        if( this.tiempoEjecutado==this.Bloqueo2I){
-            this.BloquearProceso();
-            this.tiempoBloqueo=this.Bloqueo2e;
-        }
-        if( this.tiempoEjecutado==this.Bloqueo3I ){
-            this.BloquearProceso();
-            this.tiempoBloqueo=this.Bloqueo3e;
+       
+        if( this.tiempoEjecutado==this.Bloqueo3.inicio && !this.Bloqueo3.ejecutado ){
+            this.tiempoBloqueo=this.Bloqueo3.ejecutarBloqueo();
+            return true;
     }
+    return false;
     
 }
     BloquearProceso(){
         this.isblocked=true;
+        this.iswaiting=false;
     }
-    desbloquearProceso(){
-        this.isblocked=false;
-    }
+    
     terminarProceso(){
         this.isOver=true;
     }
     PonerenEspera(){
         console.log("Estoy esperando");
+        this.isblocked=false;
         this.iswaiting=true;
     }
+    IniciarProceso(){
+        this.started=true;
+    }
     PonerenEjecucion(){
+        this.isblocked=false;
         this.iswaiting=false;
     }
 
