@@ -7,12 +7,14 @@ class RR extends Algorithm{
         this.metricas=[];
         this.metricasSistema=[];
         this.procesosCargados=[];
+        this.terminationEvents=[];
         //Se crea el scheduler
         this.Scheduler=new Scheduler(this.getQuantum());
         //Se agrega el Scheduler con su respectivo quantum
         this.procesosCargados.push(this.Scheduler);
         this.procesos=ProcesosDeSimulacion;
         this.subscribers=[];
+        this.lineSubscribers=[];
         this.loadProcess();
         console.log(this.procesosCargados);
         this.cola=[];
@@ -30,7 +32,7 @@ class RR extends Algorithm{
     }
 
     start(){
-        this.hilo=setInterval(()=>{this.RRAL()},500)
+        this.hilo=setInterval(()=>{this.RRAL()},50)
     }
     //Avisar a los suscriptores de un cambio
     notify(){
@@ -40,12 +42,19 @@ class RR extends Algorithm{
         this.subscribers.forEach(suscriber=>{
             suscriber.notify(this.drawinconsole);
         })
+        this.lineSubscribers.forEach(suscriber=>{
+            suscriber.notify(this.cola);
+        })
 
     }
     //Suscribirse al reloj del algoritmo
     subscribe(suscriptor){
         this.subscribers.push(suscriptor);
     }
+    //Suscribirse a la cola del algoritmo
+       subscribeLine(suscriptor){
+        this.lineSubscribers.push(suscriptor);
+}
     RRAL(){
         var ProcesoActual;
         //Itera sobre los procesos cargados
@@ -133,9 +142,12 @@ class RR extends Algorithm{
         }
         //Dibuja los procesos
         this.drawProcess();
-        if(this.cola.length==0 && this.procesosBloqueados.length==0){
+        if(this.cola.length==0 && this.procesosBloqueados.length==0 && this.ProcesosPorLlegar()==false){
             //Termina la simulacion
-            this.generateMetrics();
+            console.log(this.generateMetrics());
+            this.terminationEvents.forEach(event=>{
+                event(this.metricas,this.metricasSistema);
+            })
             clearInterval(this.hilo);
         }
 
@@ -186,39 +198,47 @@ class RR extends Algorithm{
         }
         getQuantum(){
             let quantum;
-                    quantum=prompt("Ingresa el valor del Quantum");
-                    if( quantum=""|| parseInt(quantum) <1|| parseInt(quantum)){
+                    quantum=parseInt(prompt("Ingresa el valor del Quantum"));
+                    if( quantum==""|| parseInt(quantum) <1){
                         alert("Valor invalido, se utilizara el valor por defecto(3)");
                         quantum=3;
                     }
             return quantum;
         }
+        //Generar las metricas de cada proceso
         generateMetrics(){
             this.procesosCargados.forEach(Process=>{
-                let MetricasDelProceso=[];
+                if(Process.nombre!="Scheduler"){
+                var MetricasDelProceso=[];
                 //Nombre del proceso
                 MetricasDelProceso.push(Process.nombre);
                 //Tiempo de ejecucion
-                MetricasDelProceso.push(Process.tiempoEjecucion);
+                MetricasDelProceso.push(parseInt(Process.tiempoEjecucion));
                 //Tiempo de Respuesta
-                MetricasDelProceso.push(Process.tiempoDeRespuesta);
+                MetricasDelProceso.push(parseInt(Process.tiempoDeRespuesta));
                 //Tiempo de bloqueo
-                let TiempoDeBloqueo=Process.Bloqueo1.duracion+Process.Bloqueo2.duracion+Process.Bloqueo3.duracion;
-                MetricasDelProceso.push(TiempoDeBloqueo);
+                var TiempoDeBloqueo=parseInt(Process.Bloqueo1.duracion)+parseInt(Process.Bloqueo2.duracion)+parseInt(Process.Bloqueo3.duracion);
+               
+                MetricasDelProceso.push(parseInt(TiempoDeBloqueo));
+                
                 //Tiempo de espera
-                let TiempoDeEspera=Process.tiempoDesdeInicio-TiempoDeBloqueo-Process.tiempoEjecucion;
+                let TiempoDeEspera=parseInt(Process.contadorDeEspera);
+                
                 MetricasDelProceso.push(TiempoDeEspera);
                 //Tiempo de finalizacion
-                MetricasDelProceso.push(Process.tiempoDesdeInicio);
+                MetricasDelProceso.push(parseInt(Process.tiempoDesdeInicio));
                 //Retorno
-                let Retorno=Process.tiempoDesdeInicio-Process.llegada;
+                let Retorno=parseInt(Process.tiempoDesdeInicio)-parseInt(Process.llegada);
                 MetricasDelProceso.push(Retorno);
                 //Tiempo Perdido
-                MetricasDelProceso.push(Retorno-Process.tiempoEjecucion);
+                MetricasDelProceso.push(Retorno-parseInt(Process.tiempoEjecucion));
                 //Penalidad
                 MetricasDelProceso.push(Retorno/Process.tiempoEjecucion);
+               console.log(MetricasDelProceso);
                 this.metricas.push(MetricasDelProceso);
+            }
             })
+            
             this.generateProcessorMetrics();
            return this.metricas;
                 }
@@ -229,7 +249,9 @@ class RR extends Algorithm{
             //Uso total de cpu
             var usoTotal=0;
             this.procesosCargados.forEach(Process=>{
-                usoTotal=usoTotal+Process.tiempoEjecucion;
+                if(Process.nombre!="Scheduler"){
+                usoTotal=usoTotal+parseInt(Process.tiempoEjecucion);
+            }
             })
             this.metricasSistema.push(usoTotal);
             //Tiempo de ocio
@@ -263,6 +285,20 @@ class RR extends Algorithm{
             promedioDeTiempoPerdido=promedioDeTiempoPerdido/this.metricas.length;
             this.metricasSistema.push(promedioDeTiempoPerdido);
             return this.metricasSistema;
+        }
+        addTerminationEvent(terminationEvent){
+            this.terminationEvents.push(terminationEvent);
+        }
+        ProcesosPorLlegar(){
+            var is=false;
+            this.procesosCargados.forEach(Process=>{
+            console.log(Process.started);
+                if(Process.started==false){
+                    is=true;
+                }
+            })
+            return is;
+
         }
     }
     export default RR;

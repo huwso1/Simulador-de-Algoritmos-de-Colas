@@ -6,8 +6,15 @@ class Algorithm{
     notify(){}
     //Suscribirse al reloj del algoritmo
     subscribe(suscriptor){}
+    //Suscribirse a la cola del algoritmo
+    subscribeLine(suscriptor){}
+    //Dibujar el proceso
     drawProcess(){}
+    //Generar metricas del proceso
     generateMetrics(){};
+    //Asignar un evento al terminar
+    addTerminationEvent(terminationEvent){}
+
     
 }
 export default Algorithm;

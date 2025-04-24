@@ -36,4 +36,10 @@
   padding: 8px 15px;
   cursor: pointer;
 }
+.results-container{
+  align-content:center;
+  align-items: center;
+  justify-content: center;
+  text-align:center;
+}
 

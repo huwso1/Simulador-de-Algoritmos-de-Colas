@@ -76,5 +76,8 @@ class TablondeProceso{
         }
 
     }
+    Clean(){
+        this.ctx.clearRect(0,0,this.kanvas.width,this.height);
+    }
 }
 export default TablondeProceso;

@@ -5,9 +5,11 @@ class SRTF extends Algorithm{
         super();
         this.metricas=[];
         this.metricasSistema=[];
+        this.terminationEvents=[];
         this.procesosCargados=[];
         this.procesos=ProcesosDeSimulacion;
         this.subscribers=[];
+        this.lineSubscribers=[];
         this.loadProcess();
         console.log(this.procesosCargados);
         this.cola=[];
@@ -24,7 +26,7 @@ class SRTF extends Algorithm{
     }
 
     start(){
-        this.hilo=setInterval(()=>{this.SRTFAL()},500)
+        this.hilo=setInterval(()=>{this.SRTFAL()},50)
     }
     //Avisar a los suscriptores de un cambio
     notify(){
@@ -34,12 +36,19 @@ class SRTF extends Algorithm{
         this.subscribers.forEach(suscriber=>{
             suscriber.notify(this.drawinconsole);
         })
+        this.lineSubscribers.forEach(suscriber=>{
+            suscriber.notify(this.cola);
+        })
 
     }
     //Suscribirse al reloj del algoritmo
     subscribe(suscriptor){
         this.subscribers.push(suscriptor);
     }
+       //Suscribirse a la cola del algoritmo
+       subscribeLine(suscriptor){
+        this.lineSubscribers.push(suscriptor);
+}
 
     SRTFAL(){
         var ProcesoActual;
@@ -65,9 +74,7 @@ class SRTF extends Algorithm{
         }
         //Se sortea la cola priorizando los procesos con menor tiempo de ejecucion
         
-        this.cola=this.cola.sort((a,b)=>{
-            return (a.tiempoEjecucion-a.tiempoEjecutado)-(b.tiempoEjecucion-b.tiempoEjecutado);
-        })
+        
         console.log(this.cola);
         //El algoritmo revisa quien esta primero en la cola, es decir el proceso con menor tiempo de ejecucion.
         if(this.cola.length==0){
@@ -78,6 +85,9 @@ class SRTF extends Algorithm{
             while(ProcesoActual.isOver){
                 //Si termino lo elimina de la cola.
                 this.cola.splice(0,1);
+                this.cola=this.cola.sort((a,b)=>{
+                    return (a.tiempoEjecucion-a.tiempoEjecutado)-(b.tiempoEjecucion-b.tiempoEjecutado);
+                })
                 if(this.cola.length!=0){
                     ProcesoActual=this.cola.at(0);
                     }else{
@@ -94,6 +104,9 @@ class SRTF extends Algorithm{
                 ProcesoActual.BloquearProceso();
                 this.procesosBloqueados.push(ProcesoActual);
                 this.cola.splice(0,1);
+                this.cola=this.cola.sort((a,b)=>{
+                    return (a.tiempoEjecucion-a.tiempoEjecutado)-(b.tiempoEjecucion-b.tiempoEjecutado);
+                })
                 //Asigna al siguiente proceso en la cola como procesoActual.
                 if(this.cola.length!=0){
                 ProcesoActual=this.cola.at(0);
@@ -111,9 +124,12 @@ class SRTF extends Algorithm{
         }
         //Dibuja los procesos
         this.drawProcess();
-        if(this.cola.length==0 && this.procesosBloqueados.length==0){
+        if(this.cola.length==0 && this.procesosBloqueados.length==0 && this.ProcesosPorLlegar()==false){
             //Termina la simulacion
-            this.generateMetrics();
+            console.log(this.generateMetrics());
+            this.terminationEvents.forEach(event=>{
+                event(this.metricas,this.metricasSistema);
+            })
             clearInterval(this.hilo);
         }
 
@@ -159,34 +175,41 @@ class SRTF extends Algorithm{
             for(var i=0;i<this.drawinconsole.length;i++){
                 console.log(this.drawinconsole[i]);
             }
-            return drawinconsole;
+            return this.drawinconsole;
         }
+        //Generar las metricas de cada proceso
         generateMetrics(){
             this.procesosCargados.forEach(Process=>{
-                let MetricasDelProceso=[];
+                var MetricasDelProceso=[];
                 //Nombre del proceso
                 MetricasDelProceso.push(Process.nombre);
                 //Tiempo de ejecucion
-                MetricasDelProceso.push(Process.tiempoEjecucion);
+                MetricasDelProceso.push(parseInt(Process.tiempoEjecucion));
                 //Tiempo de Respuesta
-                MetricasDelProceso.push(Process.tiempoDeRespuesta);
+                MetricasDelProceso.push(parseInt(Process.tiempoDeRespuesta));
                 //Tiempo de bloqueo
-                let TiempoDeBloqueo=Process.Bloqueo1.duracion+Process.Bloqueo2.duracion+Process.Bloqueo3.duracion;
-                MetricasDelProceso.push(TiempoDeBloqueo);
+                var TiempoDeBloqueo=parseInt(Process.Bloqueo1.duracion)+parseInt(Process.Bloqueo2.duracion)+parseInt(Process.Bloqueo3.duracion);
+               
+                MetricasDelProceso.push(parseInt(TiempoDeBloqueo));
+                
                 //Tiempo de espera
-                let TiempoDeEspera=Process.tiempoDesdeInicio-TiempoDeBloqueo-Process.tiempoEjecucion;
+                let TiempoDeEspera=parseInt(Process.contadorDeEspera);
+                
                 MetricasDelProceso.push(TiempoDeEspera);
                 //Tiempo de finalizacion
-                MetricasDelProceso.push(Process.tiempoDesdeInicio);
+                MetricasDelProceso.push(parseInt(Process.tiempoDesdeInicio));
                 //Retorno
-                let Retorno=Process.tiempoDesdeInicio-Process.llegada;
+                let Retorno=parseInt(Process.tiempoDesdeInicio)-parseInt(Process.llegada);
                 MetricasDelProceso.push(Retorno);
                 //Tiempo Perdido
-                MetricasDelProceso.push(Retorno-Process.tiempoEjecucion);
+                MetricasDelProceso.push(Retorno-parseInt(Process.tiempoEjecucion));
                 //Penalidad
                 MetricasDelProceso.push(Retorno/Process.tiempoEjecucion);
+               console.log(MetricasDelProceso);
                 this.metricas.push(MetricasDelProceso);
+                
             })
+            
             this.generateProcessorMetrics();
            return this.metricas;
                 }
@@ -197,7 +220,7 @@ class SRTF extends Algorithm{
             //Uso total de cpu
             var usoTotal=0;
             this.procesosCargados.forEach(Process=>{
-                usoTotal=usoTotal+Process.tiempoEjecucion;
+                usoTotal=usoTotal+parseInt(Process.tiempoEjecucion);
             })
             this.metricasSistema.push(usoTotal);
             //Tiempo de ocio
@@ -231,6 +254,20 @@ class SRTF extends Algorithm{
             promedioDeTiempoPerdido=promedioDeTiempoPerdido/this.metricas.length;
             this.metricasSistema.push(promedioDeTiempoPerdido);
             return this.metricasSistema;
+        }
+        addTerminationEvent(terminationEvent){
+            this.terminationEvents.push(terminationEvent);
+        }
+        ProcesosPorLlegar(){
+            var is=false;
+            this.procesosCargados.forEach(Process=>{
+            console.log(Process.started);
+                if(Process.started==false){
+                    is=true;
+                }
+            })
+            return is;
+
         }
        
     }
